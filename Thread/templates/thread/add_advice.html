@@ -1,0 +1,80 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <br><br>
+    <!           Отображение формы добавления совета
+    <! -------------------------------------------------------->
+    <div class="mx-auto" style="width: 400px;">
+        <form action="/add_advice" method="post" class="form-contact">
+
+
+            <!         Выбор типа данных       >
+            <p>
+                <label for="Select_Type">Type of data </label>
+                <select name="selected_type" class="form-select" id="Select_Type" required>
+                    {% for t in types %}
+                        <option value="{{t[0]}}" >{{t[0]}}</option>
+                    {% endfor -%}
+                </select>
+            </p>
+            <!         Выбор проблемы       >
+            <p>
+                <label for="Select_Problem">Problem </label>
+                <select name="selected_problem" class="form-select" id="Select_Problem" required>
+
+                </select>
+            </p>
+
+            <script>
+                let type_select = document.getElementById('Select_Type');
+                let problem_select = document.getElementById('Select_Problem');
+
+                type_select.onchange = function() {
+                    type = type_select.value;
+
+                    fetch('/select_problems/' + type).then(function(response) {
+                        let optionHTML = '';
+
+                        response.json().then(function(data) {
+                            for (let problem of data.problems) {
+                                optionHTML += '<option value="' + problem.id + '">' + problem.problem_name + '</option>';
+                            }
+
+                            problem_select.innerHTML = optionHTML;
+                        })
+                    });
+                }
+            </script>
+
+
+
+
+             <!       Содержание совета    >
+
+             <div class="form-group">
+                  <label for="Content">Content </label>
+                  <input type="text" name="Content" class="form-control" id="Content" placeholder="Введите рекомендацию" style="width: 400px; " required>
+             </div>
+             <br><br>
+
+             <!           Кнопка добавления совета  >
+             <button type="submit" class="btn btn-primary" style="width: 400px;">Добавить</button>
+             <br><br>
+             <a class="btn btn-primary " href="{{url_for('advices')}}" role="button" style="width: 400px;">Назад к списку рекомендаций</a>
+        </form>
+    </div>
+{% endblock %}

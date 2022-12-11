@@ -1,0 +1,80 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <br><br>
+    <!           Отображение формы добавления проблемы
+    <! -------------------------------------------------------->
+    <div class="mx-auto" style="width: 400px;">
+        <form action="/add_problem" method="post" class="form-contact">
+
+
+            <!         Выбор типа данных       >
+            <p>
+                <label for="Select_Type">Type of data </label>
+                <select name="selected_type" class="form-select" id="Select_Type" required>
+                    {% for t in types %}
+                        <option value="{{t[0]}}" >{{t[0]}}</option>
+                    {% endfor -%}
+                </select>
+            </p>
+            <!         Выбор диапазона       >
+            <p>
+                <label for="Select_Range">Range </label>
+                <select name="selected_range" class="form-select" id="Select_Range" required>
+
+                </select>
+            </p>
+
+            <script>
+                let type_select = document.getElementById('Select_Type');
+                let range_select = document.getElementById('Select_Range');
+
+                type_select.onchange = function() {
+                    type = type_select.value;
+
+                    fetch('/select_ranges/' + type).then(function(response) {
+                        let optionHTML = '';
+
+                        response.json().then(function(data) {
+                            for (let range of data.ranges) {
+                                optionHTML += '<option value="' + range.id + '">' + range.interval + '</option>';
+                            }
+
+                            range_select.innerHTML = optionHTML;
+                        })
+                    });
+                }
+            </script>
+
+
+
+
+             <!       Данные о диапазоне: интервал и название      >
+
+             <div class="form-group">
+                  <label for="Name">Name </label>
+                  <input type="text" name="Name" class="form-control" id="Name" placeholder="Введите название диапазона" style="width: 400px; " required>
+             </div>
+             <br><br>
+
+             <!           Кнопка добавления диапазона  >
+             <button type="submit" class="btn btn-primary" style="width: 400px;">Добавить</button>
+             <br><br>
+             <a class="btn btn-primary " href="{{url_for('problems')}}" role="button" style="width: 400px;">Назад к списку проблем</a>
+        </form>
+    </div>
+{% endblock %}

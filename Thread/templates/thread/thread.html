@@ -1,0 +1,48 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <!           Отображение графика и кнопок
+    <! -------------------------------------------------------->
+    <font size="5">
+        <center>
+                <!a class="btn btn-primary btn-lg" href="{{url_for('get_thread')}}" role="button" ><!Считать данные и добавить запись о потоке></a>
+                <!a class="btn btn-primary btn-lg" href="{{url_for('thread_problem')}}" role="button" ><!Посмотреть данные о проблемах></a>
+                <!img src='{{url}}' alt="Ошибка загрузки" style="width: 1400px;"/>
+            <div id='chart_co2' ></div>
+            <br>
+            <div id='chart_hum' ></div>
+            <br>
+            <div id='chart_temp' ></div>
+            <br>
+        </center>
+    </font>
+</body>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+      var graph_co2 = {{graph_co2 | safe}};
+      Plotly.plot('chart_co2',graph_co2,{});
+
+
+      var graph_hum = {{graph_hum | safe}};
+      Plotly.plot('chart_hum',graph_hum,{});
+
+      var graph_temp = {{graph_temp | safe}};
+      Plotly.plot('chart_temp',graph_temp,{});
+
+
+</script>
+{% endblock %}

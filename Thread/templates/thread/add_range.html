@@ -1,0 +1,59 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <br><br>
+    <!           Отображение формы добавления диапазона
+    <! -------------------------------------------------------->
+    <div class="mx-auto" style="width: 400px;">
+        <form action="/add_range" method="post" class="form-contact">
+
+           <!          Выпадающий вписок       >
+            <p>
+                <label for="SelectList">Type of data </label>
+                <select name="selected_type" class="form-select" aria-label="Default select example" id="SelectList" required>
+                    {% for t in types %}
+                        <option value="{{t[0]}}" >{{t[0]}}</option>
+                    {% endfor -%}
+                </select>
+            </p>
+
+             <!       Данные о диапазоне: интервал и название      >
+            <div class="form-group">
+                    <label for="Min">Min </label>
+                    <input type="number" name="Min" class="form-control" id="Min" placeholder="Введите минимальное значение диапазона" style="width: 400px;" required>
+                </div>
+            <br>
+                <div class="form-group">
+                    <label for="Max">Max </label>
+                    <input type="number" name="Max" class="form-control" id="Max" placeholder="Введите минимальное значение диапазона" style="width: 400px;" required>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label for="Name">Name </label>
+                    <input type="text" name="Name" class="form-control" id="Name" placeholder="Введите название диапазона" style="width: 400px;" required>
+                </div>
+                <br><br>
+
+                <!           Кнопка добавления диапазона  >
+                <button type="submit" class="btn btn-primary" style="width: 400px;">Добавить</button>
+                <br><br>
+                <a class="btn btn-primary " href="{{url_for('ranges')}}" role="button" style="width: 400px;">Назад к списку диапазонов</a>
+
+
+        </form>
+    </div>
+{% endblock %}

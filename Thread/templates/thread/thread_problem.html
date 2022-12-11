@@ -1,0 +1,20 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <center>
+        <br>
+        <a class="btn btn-primary btn-lg" href="{{url_for('thread')}}" role="button" style="width: 400px;">Назад к тображению потоков</a>
+        <br>
+    </center>
+    <div class="mx-auto" style="width: 900px;">
+       <div class="alert alert-light" role="alert" style="width: 1600px;">
+           <font size="5" color="black">
+               <pre>{{text}}</pre>
+           </font>
+       </div>
+    </div>
+{% endblock %}

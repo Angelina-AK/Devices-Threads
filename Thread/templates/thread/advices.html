@@ -1,0 +1,54 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+
+    <!           Таблица рекомендаций
+    <! -------------------------------------------------------->
+    <center>
+    <br>
+    <a class="btn btn-primary btn-lg" href="{{url_for('add_advice')}}" role="button" >Добавить совет</a>
+
+    <br><br>
+    <table class="table table-striped" style="width: 1600px;">
+        <thead class="table-primary" >
+            <tr class = " fs-4" >
+                <th scope="col" class='text-center'>Тип данных</th>
+                <th scope="col" class='text-center'>Диапазон значений</th>
+                <th scope="col" class='text-center'>Проблема</th>
+                <th scope="col" class='text-center'>Совет</th>
+                <th scope="col" class='text-center'></th>
+                <th scope="col" class='text-center'></th>
+            </tr>
+        </thead>
+        <tbody class="fs-4">
+        {% for a in advices %}
+            <tr>
+                <td class='text-center'>{{a.prob.rng.Type_of_data}}</td>
+                <td class='text-center'><pre> От {{a.prob.rng.Min}} до {{a.prob.rng.Max}} </pre></td>
+                <td class='text-center'>{{a.prob.Name}}</td>
+                <td class='text-center'>
+                        - {{a.Content}}<br>
+                </td>
+                <td class='text-center'><a class="btn btn-primary btn-lg" href="/update_advice/{{a.id}}" role="button" >Изменить</a></td>
+                <td class='text-center'><a class="btn btn-primary btn-lg" href="/delete_advice/{{a.id}}" role="button" >Удалить</a></td>
+            </tr>
+        {% endfor -%}
+        </tbody>
+    </table>
+    </center>
+{% endblock %}

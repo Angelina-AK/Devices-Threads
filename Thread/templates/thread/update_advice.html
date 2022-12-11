@@ -1,0 +1,52 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+
+
+    <!           Описание выбранного совета
+    <! -------------------------------------------------------->
+    <center>
+        <font color=#000033 size="4">
+           <br>
+            <div style="background-color: E6E6FA; display: inline-block;">
+                <br>
+                <b>Проблема, для которой создан выбранный совет:</b> {{advice.prob.Name}}
+                <br><br>
+            </div>
+
+        </font>
+    </center>
+    <br>
+
+
+    <!           Изменение совета
+    <! -------------------------------------------------------->
+    <div class="mx-auto" style="width: 400px;">
+        <form action="/update_advice/{{id}}" method="post" class="form-contact">
+                <div class="form-group">
+                    <label for="Content">Content </label>
+                    <input type="text" name="Content" class="form-control" id="Content" placeholder="Введите рекомендацию" style="width: 400px;" value="{{advice.Content}}" required>
+                </div>
+                <br><br>
+
+                <!           Кнопка изменения проблемы  >
+                <button type="submit" class="btn btn-primary" style="width: 400px;">Сохранить данные для совета</button>
+                <br><br>
+                <a class="btn btn-primary " href="{{url_for('advices')}}" role="button" style="width: 400px;">Назад к списку проблем</a>
+        </form>
+    </div>
+{% endblock %}

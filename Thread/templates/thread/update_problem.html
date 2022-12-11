@@ -1,0 +1,54 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+
+
+    <!           Описание выбранной проблемы
+    <! -------------------------------------------------------->
+    <center>
+        <font color=#000033 size="4">
+           <br>
+            <div style="background-color: E6E6FA; display: inline-block;">
+                <br>
+                <b>Тип данных выбранной проблемы:</b> {{problem.rng.Type_of_data}}
+                <br>
+                <b>Диапазон выбранной проблемы:</b> От {{problem.rng.Min}} до {{problem.rng.Max}}
+                <br><br>
+            </div>
+
+        </font>
+    </center>
+    <br>
+
+
+    <!           Изменение проблемы
+    <! -------------------------------------------------------->
+    <div class="mx-auto" style="width: 400px;">
+        <form action="/update_problem/{{id}}" method="post" class="form-contact">
+                <div class="form-group">
+                    <label for="Name">Name </label>
+                    <input type="text" name="Name" class="form-control" id="Name" placeholder="Введите название диапазона" style="width: 400px;" value="{{problem.Name}}" required>
+                </div>
+                <br><br>
+
+                <!           Кнопка изменения проблемы  >
+                <button type="submit" class="btn btn-primary" style="width: 400px;">Сохранить данные для проблемы</button>
+                <br><br>
+                <a class="btn btn-primary " href="{{url_for('problems')}}" role="button" style="width: 400px;">Назад к списку проблем</a>
+        </form>
+    </div>
+{% endblock %}

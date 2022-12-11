@@ -1,0 +1,50 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <!           Таблица проблем
+    <! -------------------------------------------------------->
+    <center>
+    <br>
+    <a class="btn btn-primary btn-lg" href="{{url_for('add_problem')}}" role="button" >Добавить проблему</a>
+    <br><br>
+    <table class="table table-striped" style="width: 1200px;">
+        <thead class="table-primary" >
+            <tr class = " fs-4" >
+                <th scope="col" class='text-center'>Тип данных</th>
+                <th scope="col" class='text-center'>Интервал</th>
+                <th scope="col" class='text-center'>Название интервала</th>
+                <th scope="col" class='text-center'>Название проблемы</th>
+                <th scope="col" class='text-center'> </th>
+                <th scope="col" class='text-center'> </th>
+            </tr>
+        </thead>
+        <tbody class="fs-4">
+        {% for k in content %}
+        <tr>
+            <td class='text-center'>{{k.rng.Type_of_data}}</td>
+            <td class='text-center'><pre> От {{k.rng.Min}} до {{k.rng.Max}} </pre></td>
+            <td class='text-center'>{{k.rng.Name}}</td>
+            <td class='text-center'>{{k.Name}}</td>
+            <td class='text-center'><a class="btn btn-primary btn-lg" href="/update_problem/{{k.id}}" role="button" >Изменить</a></td>
+            <td class='text-center'><a class="btn btn-primary btn-lg" href="/delete_problem/{{k.id}}" role="button" >Удалить</a></td>
+        </tr>
+        {% endfor -%}
+        </tbody>
+    </table>
+    </center>
+{% endblock %}
