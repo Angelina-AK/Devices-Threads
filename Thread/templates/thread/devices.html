@@ -1,0 +1,74 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <!           Отображение панелей устройств
+    <! -------------------------------------------------------->
+    <br>
+    <font size="5">
+        <center>
+            <! Цикл по списку устройств с соответствующими флагами состояний, разбиение по 3 штуки>
+            <! -------------------------------------------------------->
+            {% for d_row in devices_info | batch(3, 'n') %}
+            <div class="row " style="width: 1800px;">
+
+                <! Цикл по содержанию разбиения (3 устройства)>
+                <! -------------------------------------------------------->
+                {% for d in d_row %}
+                {% if d[1] %}
+                <div class="col">
+                    <div class="card border-success " style="max-width: 35rem; background-color: #A1FBC1;" >
+                        <div class="card-header text-white bg-success">
+                           &#10004; Значения датчиков в норме
+                        </div>
+                        <div class="card-body " >
+                                <h4 class="card-title">{{d[0]}}</h4>
+                                <p class="card-text float-left">
+                                    Описание прибора (считываемые показатели):
+                                    <br>
+                                    {{d[2]}}
+                                </p>
+                                <a href="#" class="btn btn-success">Посмотреть графики по данным с датчиков</a>
+                        </div>
+                    </div>
+                </div>
+                {% elif d == 'n' %}
+
+                {% else %}
+                <div class="col">
+                    <div class="card border-danger" style="max-width: 35rem; background-color: #FBAAA1;" >
+                        <div class="card-header text-white bg-danger">
+                            &#9888; Нежелательные значения датчиков
+                        </div>
+                        <div class="card-body " >
+                                <h4 class="card-title">{{d[0]}}</h4>
+                                <p class="card-text float-left">
+                                    Описание прибора (считываемые показатели):
+                                    <br>
+                                    {{d[2]}}
+                                </p>
+                                <a href="#" class="btn btn-danger">Посмотреть графики по данным с датчиков</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </center>
+    </font>
+</body>
+{% endblock %}
