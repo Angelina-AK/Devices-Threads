@@ -65,65 +65,6 @@ def get_thread():
 @app.route("/thread")
 @login_required
 def thread():
-    # # Заполнение массивов x y графика
-    # #---------------------------------------------------------
-    # try:
-    #     threads = Thread.query.filter_by(Type_of_data='air_temperature').all()
-    #     x = []
-    #     y = []
-    #     for t in threads:
-    #         x.append(t.DateTime)
-    #         y.append(t.Value)
-    #
-    #     # Заполнение значений для зон
-    #     ranges = Range.query.filter_by(Type_of_data='air_temperature').order_by(Range.Min).all()
-    #     zones = {}
-    #     names = []
-    #     for r in ranges:
-    #         zones.update({r.Min: r.Max})
-    #         names.append(r.Name)
-    #
-    #
-    # except:
-    #     print("Ошибка считывания данных о потоке")
-    #
-    # # Рисование графика
-    # # ---------------------------------------------------------
-    # fig = plt.figure(figsize=(16,8))
-    # plt.scatter(x,y, c = 'black', s = 20, label='Полученное значение')
-    # plt.grid()
-    #
-    # # Рисование зон температур
-    # colors = ['#0000FF','#4169E1', '#FFCC99', '#FF6633', 'red']
-    # #color = colors[i] - если диапазонов 5 и больше не станет
-    # i=0
-    # for zon in zones:
-    #     plt.fill_between(x, zon,
-    #                      zones[zon],
-    #                      alpha=0.2,
-    #                      linewidth = 3,
-    #                      linestyle='-',
-    #                      label=names[i])
-    #     i+=1
-    #
-    # # Оформление оси времени
-    # plt.gca().xaxis.set_major_formatter(mpl.dates.DateFormatter('%d_%h-%H:%M')) #Формат
-    # plt.gca().xaxis.set_major_locator(mpl.dates.AutoDateLocator()) #Шаг
-    #
-    # # Подписи
-    # plt.title('График значений с датчика "air_temperature"')
-    # plt.xlabel('Date Time')
-    # plt.xticks(rotation=30, ha='right')
-    # plt.ylabel('Value')
-    #
-    # plt.legend() # Запись легенд на график
-    #
-    # # Сохраняем график как изображение и передаем в шаблон
-    # # ---------------------------------------------------------
-    # fig.savefig('thread/static/images/air_temperature_plot.png', dpi=fig.dpi)
-    # return render_template('thread/thread.html',title = "Потоки данных", url = 'thread/static/images/air_temperature_plot.png')
-
-
     # получение данных из БД
     #_____________________________________________________
 
