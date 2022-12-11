@@ -8,7 +8,7 @@ from matplotlib.dates import DateFormatter
 from matplotlib.figure import Figure
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from models import Range,Thread,Problem,Advice
+from models import Device,Range,Thread,Problem,Advice
 from Thread.Number_Check import is_number
 import json
 import pandas as pd
@@ -62,200 +62,40 @@ def get_thread():
 
 #        Страница потоков
 #--------------------------------------------------------------------------------
-@app.route("/thread")
+@app.route("/devices")
 @login_required
-def thread():
-    # получение данных из БД
-    #_____________________________________________________
+def devices():
+    try:
+        # Получение устройств из БД
+        devices = Device.query.all()
 
-    # Первый график - co2
-    x = []
-    y = []
-    name = []
+        # Заполнение вложенного списка с информацией:
+        # - список флагов о текущем состоянии устройста (True-все хорошо, False-с каким-то показателем что-то не так)
+        # - список датчиков прибора (информация о приборе)
+        # - им прибора
+        devices_info = []
+        for d in devices:
 
-    # Второй график - humidity
-    x_h = []
-    y_h = []
-    name_h = []
+            # Информация о приборе
+            information = " "
+            types = db.session.query(Thread.Type_of_data).filter_by(Device_Id=d.id).distinct().all()
+            condition = True
+            for t in types:
+                information += " - " + str(t[0]) + "  "
 
-    # Третий график - temperature
-    x_t = []
-    y_t = []
-    name_t = []
-
-    with app.app_context():
-        try:
-            threads = Thread.query.all()
-            for t in threads:
-                if t.Type_of_data == "co2":
-                    x.append(t.DateTime)
-                    y.append(t.Value)
-                    name.append(t.rng.Name)
-                if t.Type_of_data == "humidity":
-                    x_h.append(t.DateTime)
-                    y_h.append(t.Value)
-                    name_h.append(t.rng.Name)
-                    print(t.Value)
-                if t.Type_of_data == "temperature":
-                    x_t.append(t.DateTime)
-                    y_t.append(t.Value)
-                    name_t.append(t.rng.Name)
-                    print(t.Value)
-        except:
-            print("ОШИБКА ЧТЕНИЯ ПОТОКОВ ИЗ БД")
+                # Текущее состояние прибора (проверка все ли хорошо для последнего значения выбранного сенсора)
+                thread = db.session.query(Thread).filter_by(Type_of_data=t[0], Device_Id=d.id).order_by(Thread.id.desc()).first()  # сортировка по убыванию
+                if thread.rng.prob:
+                    condition = False
 
 
+            devices_info.append([d.Name,condition,information])
 
-    # Заполнение датафреймов
-    #_____________________________________________________
-
-    # Первый график - co2
-    data = pd.DataFrame()
-    data['y'] = y
-    data['x'] = x
-    data['name'] = name
-
-    # Второй график - humidity
-    data_h = pd.DataFrame()
-    data_h['y'] = y_h
-    data_h['x'] = x_h
-    data_h['name'] = name_h
-
-    # Третий график - temperature
-    data_t = pd.DataFrame()
-    data_t['y'] = y_t
-    data_t['x'] = x_t
-    data_t['name'] = name_t
+    except:
+        print("Не получилось считать данные из БД")
 
 
-
-
-    # Построение графика на основе датафрейма
-    #_____________________________________________________
-
-    # Первый график - co2
-    #*************************
-
-    fig = px.strip(data, x='x', y='y', color='name', \
-                   labels={"y": "Значение", "x": "Дата получения значения", "name": "Название области"},\
-                   width=1600, height=700, title="Коцентрация co2 в воздухе")
-    fig.update_traces(marker_size=10)
-    fig.update_layout(font=dict(size=15), template = 'plotly_dark')  # размер шрифта
-
-    # Выбор: за последний день/месяц/год
-    fig.update_layout(
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                         label="1 день",
-                         step="day",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1 месяц",
-                         step="month",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1 год",
-                         step="year",
-                         stepmode="todate"),
-                    dict(label="Все значения",
-                         step="all")
-                ]),
-                bgcolor='#000000',
-                bordercolor='#FFFFFF',
-                font = dict(size=15)
-            ),
-            type="date"
-        )
-    )
-
-    graph_co2 = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-
-
-    # Второй график - humidity
-    # *************************
-
-    fig_h = px.strip(data_h, x='x', y='y', color='name', \
-                   labels={"y": "Значение", "x": "Дата получения значения", "name": "Название области"}, \
-                   width=1600, height=700, title="Влажность воздуха")
-    fig_h.update_traces(marker_size=10)
-    fig_h.update_layout(font=dict(size=15), template='plotly_dark')  # размер шрифта
-
-    # Выбор: за последний день/месяц/год
-    fig_h.update_layout(
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                         label="1 день",
-                         step="day",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1 месяц",
-                         step="month",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1 год",
-                         step="year",
-                         stepmode="todate"),
-                    dict(label="Все значения",
-                         step="all")
-                ]),
-                bgcolor='#000000',
-                bordercolor='#FFFFFF',
-                font=dict(size=15)
-            ),
-            type="date"
-        )
-    )
-
-    graph_hum = json.dumps(fig_h, cls=plotly.utils.PlotlyJSONEncoder)
-
-    # Третий график - temperature
-    # *************************
-
-    fig_t = px.strip(data_t, x='x', y='y', color='name', \
-                     labels={"y": "Значение", "x": "Дата получения значения", "name": "Название области"}, \
-                     width=1600, height=700, title="Температура")
-    fig_t.update_traces(marker_size=10)
-    fig_t.update_layout(font=dict(size=15), template='plotly_dark')  # размер шрифта
-
-    # Выбор: за последний день/месяц/год
-    fig_t.update_layout(
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                         label="1 день",
-                         step="day",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1 месяц",
-                         step="month",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="1 год",
-                         step="year",
-                         stepmode="todate"),
-                    dict(label="Все значения",
-                         step="all")
-                ]),
-                bgcolor='#000000',
-                bordercolor='#FFFFFF',
-                font=dict(size=15)
-            ),
-            type="date"
-        )
-    )
-
-
-    graph_temp = json.dumps(fig_t, cls=plotly.utils.PlotlyJSONEncoder)
-
-# Test pycharm
-
-    return render_template('thread/thread.html',title = "Потоки данных",graph_co2=graph_co2,graph_hum=graph_hum,graph_temp=graph_temp)
+    return render_template('thread/devices.html',title = "Устройства", devices_info=devices_info)
 
 
 #--------------------------------------------------------------------------------

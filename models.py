@@ -13,17 +13,25 @@ class User(db.Model):
     avatar = db.Column(BLOB, default = None)
 
 
+class Device(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(50))
+    Name = db.Column(db.String(50))
+
+    # Ссылка на детей
+    thre = db.relationship('Thread', backref = 'Device', uselist=True, lazy='subquery')
 
 class Thread(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(50))
     Type_of_data = db.Column(db.String(50))
     Value = db.Column(db.Float)
     DateTime = db.Column(db.DateTime(), default= datetime.now)
     Range_Id = db.Column(db.Integer, db.ForeignKey('range.id'))
+    Device_Id = db.Column(db.Integer, db.ForeignKey('device.id'))
 
-    # Родитель
+    # Родители
     rng = db.relationship('Range', backref = 'Thread', uselist=False , lazy='subquery')
+    dev = db.relationship('Device', backref = 'Thread', uselist=False , lazy='subquery')
     # lazy='subquery'
 
 
