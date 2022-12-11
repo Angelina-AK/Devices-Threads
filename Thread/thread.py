@@ -253,7 +253,7 @@ def thread():
 
     graph_temp = json.dumps(fig_t, cls=plotly.utils.PlotlyJSONEncoder)
 
-
+# Test pycharm
 
     return render_template('thread/thread.html',title = "Потоки данных",graph_co2=graph_co2,graph_hum=graph_hum,graph_temp=graph_temp)
 
