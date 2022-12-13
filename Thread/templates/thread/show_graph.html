@@ -2,7 +2,13 @@
 <!        На основе base.html, расширяет блок контента
 <! -------------------------------------------------------->
 {% extends 'base.html' %}
+<head>
 
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+</head>
 {% block content %}
     {{ super() }}
     <!           Отображение мгновенных сообщений
@@ -25,21 +31,25 @@
                 <! -------------------------------------------------------->
                 {% for s in sensors %}
                 <div class="card" style="max-width: 80rem; padding: .5em .0em .0em;border-radius: 1em;text-align: center;box-shadow: 0 5px 10px rgba(0,0,0,.3);" >
-                    <p id="{{loop.index}}">
-                    </p>
+                    <p id="{{loop.index}}"></p>
+                    <center>
+                        <input type="text" name="daterange{{loop.index}}" value="Выбрать диапазон дат" style="max-width: 13rem;" class="form-control text-center bg-primary text-white" />
+                    </center>
+                    <br>
                 </div>
                 <br><br>
                 {% endfor %}
+                <br>
+
             </div>
         </div>
     </center>
 </body>
 
-<!   Рисование графиков в цикле
+<!   Рисование графиков в цикле >
 <! -------------------------------------------------------->
 {% for s in sensors %}
 <script>
-
         let div{{loop.index}} = document.getElementById('{{loop.index}}');
         var x_s{{loop.index}} = {{s[1] |tojson |safe}};
 
@@ -124,9 +134,67 @@
 
         Plotly.newPlot(div{{loop.index}},data{{loop.index}},layout{{loop.index}}, {displaylogo: false});
 
+</script>
 
+<!   Выбор диапазона дат >
+<! -------------------------------------------------------->
+<script>
+$(function() {
+    $('input[name="daterange{{loop.index}}"]').daterangepicker({
+        opens: 'left',
+        drops: 'up',
+        showDropdowns: true,
+        autoUpdateInput: false,
+        locale: {
+            "format": "DD/MM/YYYY",
+            "applyLabel": 'Выбрать',
+            "cancelLabel": 'Отчистить поле',
+            "daysOfWeek": [
+                    "Вс",
+                    "Пн",
+                    "Вт",
+                    "Ср",
+                    "Чт",
+                    "Пт",
+                    "Сб" ],
+            "monthNames": [
+                    "Январь",
+                    "Февраль",
+                    "Март",
+                    "Апрель",
+                    "Май",
+                    "Июнь",
+                    "Июль",
+                    "Август",
+                    "Сентябрь",
+                    "Октябрь",
+                    "Ноябрь",
+                    "Декабрь"],
+        },
+        }, function(start, end, label) {
+            Plotly.relayout(div{{loop.index}},'xaxis.range', [start.format('YYYY-MM-DD'),end.format('YYYY-MM-DD')])
+    });
+
+    $('input[name="daterange{{loop.index}}"]').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+    });
+
+    $('input[name="daterange{{loop.index}}"]').on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val('Выбрать диапазон дат');
+    });
+
+    document.addEventListener("DOMContentLoaded", ready);
+    function ready() {
+        alert('DOM готов');
+        $('input[name="daterange{{loop.index}}"]').val('Выбрать диапазон дат');
+    };
+
+});
 </script>
 
 {% endfor %}
+
+
+
 
 {% endblock %}
