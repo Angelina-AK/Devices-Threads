@@ -58,9 +58,9 @@ def get_thread():
     return render_template('thread/thread.html',title = "Потоки данных", url = 'thread/static/images/air_temperature_plot.png')
 
 
-#***************************************************************ПОКАЗ_ПОТОКОВ******************************************************************************
+#***************************************************************ПОКАЗ_УСТРОЙСТВ_И_ПОТОКОВ******************************************************************************
 
-#        Страница потоков
+#        Страница устройств
 #--------------------------------------------------------------------------------
 @app.route("/devices")
 @login_required
@@ -84,12 +84,12 @@ def devices():
                 information += " - " + str(t[0]) + "  "
 
                 # Текущее состояние прибора (проверка все ли хорошо для последнего значения выбранного сенсора)
-                thread = db.session.query(Thread).filter_by(Type_of_data=t[0], Device_Id=d.id).order_by(Thread.id.desc()).first()  # сортировка по убыванию
+                thread = db.session.query(Thread).filter_by(Type_of_data=t[0], Device_Id=d.id).order_by(Thread.DateTime.desc()).first()  # сортировка по убыванию
                 if thread.rng.prob:
                     condition = False
 
 
-            devices_info.append([d.Name,condition,information])
+            devices_info.append([d.Name,condition,information, d.id])
 
     except:
         print("Не получилось считать данные из БД")
@@ -97,6 +97,39 @@ def devices():
 
     return render_template('thread/devices.html',title = "Устройства", devices_info=devices_info)
 
+
+#        Страница потоков с устройства
+#--------------------------------------------------------------------------------
+@app.route("/show_graph/<id>")
+@login_required
+def show_graph(id):
+    try:
+        device = db.session.query(Device.Name).filter_by(id=id).first()
+        # Считываем типы датчиков для данного устройства
+        types = db.session.query(Thread.Type_of_data).filter_by(Device_Id=id).distinct().all()
+
+        # Заполняем вложенный список для графика:
+        # [ [ имя_датчика , [x - DateTime] , [y - Value] ] ]
+        # Пример: [ [ air_temperature , [27_Nov,30_Nov] , [10,9] ] ]
+        sensors = []
+        for ty in types:
+            x = []
+            y = []
+            groups = []
+            threads = Thread.query.filter_by(Type_of_data=ty[0], Device_Id=id).all()
+            for thr in threads:
+                time = thr.DateTime
+                x.append(time.isoformat())
+                y.append(thr.Value)
+                groups.append(thr.rng.Name)
+            sensors.append([ty[0],{"x":x},{"y":y},json.dumps({"gr":groups},ensure_ascii=False)])
+
+    except:
+        print("Не получилось считать данные из БД")
+
+
+    title = "Потоки данных с устройства " + str(device[0])
+    return render_template('thread/show_graph.html',title = title, sensors=sensors)
 
 #--------------------------------------------------------------------------------
 #        Страница проблем данных с потоков (ОТЧЕТ)

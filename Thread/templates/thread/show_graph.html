@@ -1,0 +1,132 @@
+<! -------------------------------------------------------->
+<!        На основе base.html, расширяет блок контента
+<! -------------------------------------------------------->
+{% extends 'base.html' %}
+
+{% block content %}
+    {{ super() }}
+    <!           Отображение мгновенных сообщений
+    <! -------------------------------------------------------->
+    {% for cat,msg in get_flashed_messages(True) %}
+        <font size="4">
+        <figure class="text-center">
+            <div class="alert {{cat}} " role="alert">{{msg}}</div>
+        </figure>
+        </font>
+    {% endfor %}
+
+    <!   Отображение Графиков по данным с датчиков устройства
+    <! -------------------------------------------------------->
+    <center>
+        <br>
+        <div class="row " style="width: 1900px;">
+            <div class="col" >
+                <!   Цикл по всем датчикам для выбранного устройства
+                <! -------------------------------------------------------->
+                {% for s in sensors %}
+                <div class="card" style="max-width: 80rem; padding: .5em .0em .0em;border-radius: 1em;text-align: center;box-shadow: 0 5px 10px rgba(0,0,0,.3);" >
+                    <p id="{{loop.index}}">
+                    </p>
+                </div>
+                <br><br>
+                {% endfor %}
+            </div>
+        </div>
+    </center>
+</body>
+
+<!   Рисование графиков в цикле
+<! -------------------------------------------------------->
+{% for s in sensors %}
+<script>
+
+        let div{{loop.index}} = document.getElementById('{{loop.index}}');
+        var x_s{{loop.index}} = {{s[1] |tojson |safe}};
+
+        var y_s{{loop.index}} = {{s[2] |tojson |safe}};
+
+        var gr{{loop.index}} = {{s[3] | safe}};
+
+        data{{loop.index}} = [{
+            type: 'scatter',
+            x: x_s{{loop.index}}.x,
+            y: y_s{{loop.index}}.y,
+            mode: 'markers',
+            marker: {
+                size: 5,
+            },
+            showlegend: true,
+            transforms: [{
+                type: 'groupby',
+                groups: gr{{loop.index}}.gr,
+                }]
+
+        }];
+
+        var layout{{loop.index}} = {
+            title : "Датчик {{s[0]|safe}}",
+            font: {
+                size: 15,
+                color: '#303030'
+            },
+              width: 1250,
+              height: 600,
+            xaxis: {
+                title: {
+                text: 'Дата получения значения с датчика',
+                font: {
+                    size: 15,
+                    color: '#595959'
+                    }
+                },
+                autorange: true,
+                rangeselector: {buttons: [
+                    {
+                        count: 1,
+                        label: '1 день',
+                        step: 'day',
+                        stepmode: 'backward'
+                    },
+                    {
+                        count: 1,
+                        label: '1 месяц',
+                        step: 'month',
+                        stepmode: 'backward'
+                    },
+                    {
+                        count: 1,
+                        label: '1 год',
+                        step: 'year',
+                        stepmode: 'backward'
+                    },
+                    {
+                        label: 'Все значения',
+                        step: 'all'
+                    }
+                ]},
+                type: 'date'
+            },
+            yaxis: {
+                title: {
+                text: 'Полученное значение',
+                font: {
+                    size: 15,
+                    color: '#595959'
+                    }
+                }
+            },
+            legend: {
+                title: {
+                    text: "Области"
+                }
+            }
+        };
+
+        Plotly.newPlot(div{{loop.index}},data{{loop.index}},layout{{loop.index}}, {displaylogo: false});
+
+
+</script>
+
+{% endfor %}
+
+{% endblock %}

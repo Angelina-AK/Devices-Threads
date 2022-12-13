@@ -29,9 +29,9 @@
                 <! -------------------------------------------------------->
                 {% for d in d_row %}
                 {% if d[1] %}
-                <div class="col">
-                    <div class="card border-success " style="max-width: 35rem; background-color: #A1FBC1;" >
-                        <div class="card-header text-white bg-success">
+                <div class="col" >
+                    <div class="card" style="max-width: 35rem; background-color: #cae5d0;padding: .5em .0em .0em;border-radius: 1em;text-align: center;box-shadow: 0 5px 10px rgba(0,0,0,.3);" >
+                        <div class="card-header text-white " style=" background-color: #07521F;">
                            &#10004; Значения датчиков в норме
                         </div>
                         <div class="card-body " >
@@ -41,7 +41,7 @@
                                     <br>
                                     {{d[2]}}
                                 </p>
-                                <a href="#" class="btn btn-success">Посмотреть графики по данным с датчиков</a>
+                                <a href="/show_graph/{{d[3]}}" class="btn btn-success" style=" background-color: #07521F;">Посмотреть графики по данным с датчиков</a>
                         </div>
                     </div>
                 </div>
@@ -49,8 +49,8 @@
 
                 {% else %}
                 <div class="col">
-                    <div class="card border-danger" style="max-width: 35rem; background-color: #FBAAA1;" >
-                        <div class="card-header text-white bg-danger">
+                    <div class="card " style="max-width: 35rem; background-color: #ebcaca;padding: .5em .0em .0em;border-radius: 1em;text-align: center;box-shadow: 0 5px 10px rgba(0,0,0,.3);" >
+                        <div class="card-header text-white" style=" background-color: #7A0C0C;">
                             &#9888; Нежелательные значения датчиков
                         </div>
                         <div class="card-body " >
@@ -60,7 +60,7 @@
                                     <br>
                                     {{d[2]}}
                                 </p>
-                                <a href="#" class="btn btn-danger">Посмотреть графики по данным с датчиков</a>
+                                <a href="/show_graph/{{d[3]}}" class="btn btn-danger" style=" background-color: #7A0C0C;">Посмотреть графики по данным с датчиков</a>
                         </div>
                     </div>
                 </div>
