@@ -15,6 +15,41 @@
         </font>
     {% endfor %}
 
+
+    <!        Выпадающий список справочников для анализа данных     >
+    <! -------------------------------------------------------->
+    <center>
+    <br>
+    <p>
+       <select name="selected_directory" class="form-select-lg text-center " id="Select_Directory" style="width: 600px;" >
+            {% for dir in directories %}
+                <option value="{{dir.id}}" id="{{dir.id}}">Cправочник {{dir.Name}}</option>
+            {% endfor -%}
+       </select>
+    </p>
+    </center>
+
+
+    <script>
+        // Получаем id выбранного справочника, для его выбора в selector при перезагрузке страницы
+        //-----------------------------------------------------------------------------------------
+        let currentUrl = window.location.href;
+        var last = currentUrl.split('/').pop();
+        console.log(last);
+        document.getElementById(last).selected=true;
+
+
+        // Получаем выбранный в selector элемент и загружаем страницу с выбранным id справочника
+        //-----------------------------------------------------------------------------------------
+        let dir_select = document.getElementById('Select_Directory');
+
+        dir_select.onchange = function() {
+           dir_id = dir_select.value;
+           window.location.href = '/devices/' + dir_id;
+
+        }
+    </script>
+
     <!           Отображение панелей устройств
     <! -------------------------------------------------------->
     <br>
@@ -28,6 +63,7 @@
                 <! Цикл по содержанию разбиения (3 устройства)>
                 <! -------------------------------------------------------->
                 {% for d in d_row %}
+
                 {% if d[1] %}
                 <div class="col" >
                     <div class="card" style="max-width: 35rem; background-color: #cae5d0;padding: .5em .0em .0em;border-radius: 1em;text-align: center;box-shadow: 0 5px 10px rgba(0,0,0,.3);" >
@@ -37,14 +73,18 @@
                         <div class="card-body " >
                                 <h4 class="card-title">{{d[0]}}</h4>
                                 <p class="card-text float-left">
-                                    Описание прибора (считываемые показатели):
+                                    Считываемые показатели:
                                     <br>
                                     {{d[2]}}
                                 </p>
-                                <a href="/show_graph/{{d[3]}}" class="btn btn-success" style=" background-color: #07521F;">Посмотреть графики по данным с датчиков</a>
+                                <a href="/show_graph/{{d[3]}}/{{dir_id}}/default" class="btn btn-success" style=" background-color: #07521F;" >Посмотреть графики по данным с датчиков</a>
                         </div>
+
                     </div>
+                    <br>
+                    <br>
                 </div>
+
                 {% elif d == 'n' %}
 
                 {% else %}
@@ -56,15 +96,18 @@
                         <div class="card-body " >
                                 <h4 class="card-title">{{d[0]}}</h4>
                                 <p class="card-text float-left">
-                                    Описание прибора (считываемые показатели):
+                                    Считываемые показатели:
                                     <br>
                                     {{d[2]}}
                                 </p>
-                                <a href="/show_graph/{{d[3]}}" class="btn btn-danger" style=" background-color: #7A0C0C;">Посмотреть графики по данным с датчиков</a>
+                                <a href="/show_graph/{{d[3]}}/{{dir_id}}/default" class="btn btn-danger" style=" background-color: #7A0C0C;">Посмотреть графики по данным с датчиков</a>
                         </div>
                     </div>
+                    <br>
                 </div>
+                <br>
                 {% endif %}
+
                 {% endfor %}
             </div>
             {% endfor %}

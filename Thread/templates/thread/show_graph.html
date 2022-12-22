@@ -21,24 +21,63 @@
         </font>
     {% endfor %}
 
-    <!   Отображение Графиков по данным с датчиков устройства
+
+    <!   Выпадающий список датчиков выбранного устройства     >
     <! -------------------------------------------------------->
     <center>
-        <br>
+    <br>
+    <p>
+       <select name="selected_sensor" class="form-select-lg text-center " id="Select_Sensor" style="width: 600px;" >
+            {% for sen in sensors_list %}
+                <option value="{{sen}}" id="{{sen}}">Датчик {{sen}}</option>
+            {% endfor -%}
+       </select>
+    </p>
+    <p>
+        {{dir_text}}
+    </p>
+    </center>
+
+
+    <script>
+        // Получаем id выбранного справочника, для его выбора в selector при перезагрузке страницы
+        //-----------------------------------------------------------------------------------------
+        let currentUrl = window.location.href;
+        var last = currentUrl.split('/').pop();
+        console.log(last);
+        if (last != 'default') document.getElementById(last).selected=true;
+
+
+
+
+        // Получаем выбранный в selector элемент и загружаем страницу с выбранным id справочника
+        //-----------------------------------------------------------------------------------------
+        let sen_select = document.getElementById('Select_Sensor');
+
+        sen_select.onchange = function() {
+           selected_type = sen_select.value;
+           window.location.href = selected_type;
+        }
+    </script>
+
+
+    <!   Отображение Графика по данным с выбранного датчика устройства
+    <! -------------------------------------------------------->
+    <center>
         <div class="row " style="width: 1900px;">
             <div class="col" >
-                <!   Цикл по всем датчикам для выбранного устройства
+                <!   Карточка с графиком >
                 <! -------------------------------------------------------->
-                {% for s in sensors %}
                 <div class="card" style="max-width: 80rem; padding: .5em .0em .0em;border-radius: 1em;text-align: center;box-shadow: 0 5px 10px rgba(0,0,0,.3);" >
-                    <p id="{{loop.index}}"></p>
+
+                    <p id="graph"> </p>
+
                     <center>
-                        <input type="text" name="daterange{{loop.index}}" value="Выбрать диапазон дат" style="max-width: 13rem;" class="form-control text-center bg-primary text-white" />
+                        <input type="text" name="daterange" value="Выбрать диапазон дат" style="max-width: 13rem;" class="form-control text-center bg-primary text-white" />
                     </center>
                     <br>
                 </div>
                 <br><br>
-                {% endfor %}
                 <br>
 
             </div>
@@ -46,21 +85,22 @@
     </center>
 </body>
 
-<!   Рисование графиков в цикле >
+<!   Рисование графика >
 <! -------------------------------------------------------->
-{% for s in sensors %}
 <script>
-        let div{{loop.index}} = document.getElementById('{{loop.index}}');
-        var x_s{{loop.index}} = {{s[1] |tojson |safe}};
+        let div = document.getElementById('graph');
 
-        var y_s{{loop.index}} = {{s[2] |tojson |safe}};
+        var x_mas = {{x |safe}};
 
-        var gr{{loop.index}} = {{s[3] | safe}};
+        var y_mas = {{y |safe}};
 
-        data{{loop.index}} = [{
+
+        var gr_mas = {{groups | safe}};
+
+        data = [{
             type: 'scatter',
-            x: x_s{{loop.index}}.x,
-            y: y_s{{loop.index}}.y,
+            x: x_mas,
+            y: y_mas,
             mode: 'markers',
             marker: {
                 size: 5,
@@ -68,13 +108,13 @@
             showlegend: true,
             transforms: [{
                 type: 'groupby',
-                groups: gr{{loop.index}}.gr,
+                groups: gr_mas,
                 }]
 
         }];
 
-        var layout{{loop.index}} = {
-            title : "Датчик {{s[0]|safe}}",
+        var layout = {
+            title : "Датчик {{sensor|safe}}",
             font: {
                 size: 15,
                 color: '#303030'
@@ -132,7 +172,7 @@
             }
         };
 
-        Plotly.newPlot(div{{loop.index}},data{{loop.index}},layout{{loop.index}}, {displaylogo: false});
+        Plotly.newPlot(div,data,layout, {displaylogo: false});
 
 </script>
 
@@ -140,7 +180,7 @@
 <! -------------------------------------------------------->
 <script>
 $(function() {
-    $('input[name="daterange{{loop.index}}"]').daterangepicker({
+    $('input[name="daterange"]').daterangepicker({
         opens: 'left',
         drops: 'up',
         showDropdowns: true,
@@ -172,29 +212,25 @@ $(function() {
                     "Декабрь"],
         },
         }, function(start, end, label) {
-            Plotly.relayout(div{{loop.index}},'xaxis.range', [start.format('YYYY-MM-DD'),end.format('YYYY-MM-DD')])
+            Plotly.relayout(div,'xaxis.range', [start.format('YYYY-MM-DD'),end.format('YYYY-MM-DD')])
     });
 
-    $('input[name="daterange{{loop.index}}"]').on('apply.daterangepicker', function(ev, picker) {
+    $('input[name="daterange"]').on('apply.daterangepicker', function(ev, picker) {
       $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
     });
 
-    $('input[name="daterange{{loop.index}}"]').on('cancel.daterangepicker', function(ev, picker) {
+    $('input[name="daterange"]').on('cancel.daterangepicker', function(ev, picker) {
       $(this).val('Выбрать диапазон дат');
     });
 
     document.addEventListener("DOMContentLoaded", ready);
     function ready() {
         alert('DOM готов');
-        $('input[name="daterange{{loop.index}}"]').val('Выбрать диапазон дат');
+        $('input[name="daterange"]').val('Выбрать диапазон дат');
     };
 
 });
 </script>
-
-{% endfor %}
-
-
 
 
 {% endblock %}

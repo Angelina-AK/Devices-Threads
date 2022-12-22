@@ -8,174 +8,213 @@ from matplotlib.dates import DateFormatter
 from matplotlib.figure import Figure
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from models import Device,Range,Thread,Problem,Advice
+from models import Device,Directory,Sensor,Range,Problem,Advice
 from Thread.Number_Check import is_number
 import json
-import pandas as pd
-import plotly.express as px
-import plotly
+
+from urllib.request import urlopen
+import json
 
 
 #   Создание Blueprint
 thread_bl = Blueprint('thread',__name__,template_folder='templates',static_folder='static')
-
-#***************************************************************ЗАНЕСЕНИЕ_В_БД*******************************************************
-
-#        Считывание данных с потока и занесение в БД
-#--------------------------------------------------------------------------------
-@app.route('/get_thread')
-def get_thread():
-    # Берем данные с сайта
-    url = 'http://metadb.ru/flows/18'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    content = soup.prettify()
-    content.replace("\n", "")
-    js = eval(content)
-    #print(js['air_temperature']) Для проверки
-
-    try:
-        ranges = Range.query.filter_by(Type_of_data='air_temperature').all()
-        value = js['air_temperature']
-        added = False
-        for r in ranges:
-            if value >= r.Min and value <= r.Max:
-                range_id = r.id
-                t = Thread(url=url, Type_of_data='air_temperature', Value=value, Range_Id = range_id)
-                db.session.add(t)
-                db.session.commit()
-                flash("Данные о потоке успешно добавлены", "alert-success")
-                added = True
-                break
-
-        if added == False:
-            print("ОШИБКА ДОБАВЛЕНИЯ ПОТОКА, ЗНАЧЕНИЕ НЕ СООТВЕТСТВУЕТ НИ ОДНОМУ ДИАПАЗОНУ")
-            flash("Ошибка добавления потока в БД - НЕ СООТВЕТСТВИЕ НИ ОДНОМУ ИЗ ДИАПАЗОНОВ", "alert-danger")
-    except:
-        db.session.rollback()
-        print("Ошибка добавления записи о потоке")
-        flash("Ошибка добавления записи о потоке", "alert-danger")
-    return render_template('thread/thread.html',title = "Потоки данных", url = 'thread/static/images/air_temperature_plot.png')
 
 
 #***************************************************************ПОКАЗ_УСТРОЙСТВ_И_ПОТОКОВ******************************************************************************
 
 #        Страница устройств
 #--------------------------------------------------------------------------------
-@app.route("/devices")
+@app.route("/devices/<dir_id>")
 @login_required
-def devices():
+def devices(dir_id):
+
+
     try:
         # Получение устройств из БД
         devices = Device.query.all()
 
-        # Заполнение вложенного списка с информацией:
-        # - список флагов о текущем состоянии устройста (True-все хорошо, False-с каким-то показателем что-то не так)
-        # - список датчиков прибора (информация о приборе)
-        # - им прибора
+
+
+        # Заполнение вложенного списка с информацией, где элемент это список из:
+        # - имя устройства
+        # - флаг о текущем состоянии устройста (True-все хорошо, False-с каким-то показателем что-то не так)
+        # - Описание устройства: список датчиков прибора
+        # - id прибора
         devices_info = []
         for d in devices:
 
-            # Информация о приборе
-            information = " "
-            types = db.session.query(Thread.Type_of_data).filter_by(Device_Id=d.id).distinct().all()
+            # Парсинг текущих данных с устройства
+            #-----------------------------------------------------------
+            url = d.url
+            response = urlopen(url)
+            js = json.loads(response.read())
+
+            # Описание устройства
+            information = " | "
+
+            # Состояние устройства
             condition = True
-            for t in types:
-                information += " - " + str(t[0]) + "  "
 
-                # Текущее состояние прибора (проверка все ли хорошо для последнего значения выбранного сенсора)
-                thread = db.session.query(Thread).filter_by(Type_of_data=t[0], Device_Id=d.id).order_by(Thread.DateTime.desc()).first()  # сортировка по убыванию
-                if thread.rng.prob:
-                    condition = False
+            for j in js:
 
+                if j == "time":
+                    continue
 
+                information += j + " | "
+
+                # Определение состояния, в котором находится устройство
+                # -------------------------------------------------------
+                try:
+                    # Есть ли в БД информация про этот тип датчика
+                    type = Sensor.query.filter_by(Name=j).first()
+                    if type:
+
+                        try:
+                            # Есть ли в БД информация из выбранного справочника для этого типа датчика
+                            ranges = Range.query.filter_by(Sensor_Id=type.id,Directory_Id=dir_id).all()
+                            if ranges:
+
+                                for r in ranges:
+                                    # Значение попало в диапазон с проблемой
+                                    if js[j] >= r.Min and js[j] <= r.Max and r.prob:
+                                        condition = False
+                                        break
+                                        break
+
+                            else:
+                                print("Для данного датчика нет диапазонов выбранном справочнике")
+                                continue
+
+                        except:
+                            print("Не получилось считать диапазоны из БД")
+
+                    else:
+                        print("Про данный датчик нет информации в БД")
+                        continue
+
+                except:
+                    print("Не получилось считать тип датчика из БД")
+
+            # Заполнение вложенного списка
             devices_info.append([d.Name,condition,information, d.id])
 
     except:
         print("Не получилось считать данные из БД")
 
 
-    return render_template('thread/devices.html',title = "Устройства", devices_info=devices_info)
+    try:
+        directories = Directory.query.all()
+
+    except:
+
+        print("Ошибка считывания справочников из БД")
+
+    return render_template('thread/devices.html',title = "Устройства", devices_info=devices_info, directories=directories, dir_id=dir_id)
 
 
 #        Страница потоков с устройства
 #--------------------------------------------------------------------------------
-@app.route("/show_graph/<id>")
+@app.route("/show_graph/<dev_id>/<dir_id>/<sensor>")
 @login_required
-def show_graph(id):
+def show_graph(dev_id,dir_id,sensor):
     try:
-        device = db.session.query(Device.Name).filter_by(id=id).first()
-        # Считываем типы датчиков для данного устройства
-        types = db.session.query(Thread.Type_of_data).filter_by(Device_Id=id).distinct().all()
 
-        # Заполняем вложенный список для графика:
-        # [ [ имя_датчика , [x - DateTime] , [y - Value] ] ]
-        # Пример: [ [ air_temperature , [27_Nov,30_Nov] , [10,9] ] ]
-        sensors = []
-        for ty in types:
-            x = []
-            y = []
-            groups = []
-            threads = Thread.query.filter_by(Type_of_data=ty[0], Device_Id=id).all()
-            for thr in threads:
-                time = thr.DateTime
-                x.append(time.isoformat())
-                y.append(thr.Value)
-                groups.append(thr.rng.Name)
-            sensors.append([ty[0],{"x":x},{"y":y},json.dumps({"gr":groups},ensure_ascii=False)])
+        # Парсинг всех данных с устройства
+        # -----------------------------------------------------------
+        device = Device.query.filter_by(id=dev_id).first()
+        url = str(device.url) + "/all"
+        response = urlopen(url)
+        js = json.loads(response.read())
+
+        # Если пока не выбран датчик, задание дефолтного значения
+        # -----------------------------------------------------------
+        sensors_list = []
+        def_with_value = False
+        for j in js[0]:
+            if sensor == "default" and def_with_value == False:
+                sensor = j
+            sensors_list.append(j)
+
+
+        # Сбор справочной информации для обработки и заполнение списков для графиков
+        # -----------------------------------------------------------
+
+        x = []   # временные метки
+        y = []   # значения с датчика
+        groups = []   # метки группы
+
+        no_info = False      # на случай, если в базе данных нет информации в выбранном справочнике для выбранного датчика
+
+        try:
+            # Получаем выбранный датчик устройства
+            sensor_DB = Sensor.query.filter_by(Name=sensor).first()
+            if sensor_DB:
+
+                try:
+                    # Получаем диапазоны для выбранного датчика в выбранном справочнике
+                    ranges = Range.query.filter_by(Sensor_Id=sensor_DB.id,Directory_Id=dir_id).all()
+                    if ranges:
+
+                        # Заполнение списоков для построения графика
+                        for j in js:
+                            value = j[sensor]
+                            DateTime = datetime.strptime(j['time'], "%a, %d %b %Y %H:%M:%S %Z")
+                            x.append(DateTime.isoformat())
+                            y.append(value)
+
+                            no_info_for_value = True
+                            for r in ranges:
+                                if value >= r.Min and value <= r.Max:
+                                    groups.append(r.Name)
+                                    no_info_for_value = False
+                                    break
+
+                            if no_info_for_value == True:
+                                groups.append("Нет описания в справочнике")
+
+
+                    else:
+                        no_info = True
+                except:
+                    print("Не получилось считать диапазоны из БД")
+            else:
+                no_info=True
+        except:
+            print("Не получилось считать тип датчика из БД")
+
+
+        if no_info == True:
+            for j in js:
+                DateTime = datetime.strptime(j['time'], "%a, %d %b %Y %H:%M:%S %Z")
+                x.append(DateTime.isoformat())
+                y.append(j[sensor])
+                groups.append("Нет описания в справочнике")
+
 
     except:
-        print("Не получилось считать данные из БД")
+        print("Не получилось считать устройство из БД")
 
 
-    title = "Потоки данных с устройства " + str(device[0])
-    return render_template('thread/show_graph.html',title = title, sensors=sensors)
+    # Формироание заголовка
+    try:
+        cur_directory = Directory.query.filter_by(id=dir_id).first()
+
+    except:
+        print("Не получилось считать справочник из БД")
+
+    title = "Потоки данных с устройства " + str(device.Name)
+    dir_text = "Cправочник: " + str(cur_directory.Name)
+    return render_template('thread/show_graph.html',title = title, x=json.dumps(x,ensure_ascii=False),y=y,groups=groups,sensor=sensor,sensors_list=sensors_list, dir_text=dir_text)
 
 
 #--------------------------------------------------------------------------------
-#        Страница проблем данных с потоков (ОТЧЕТ)
+#        ДЛЯ ТРЕНИРОВКИ
 #--------------------------------------------------------------------------------
 @app.route("/tmp")
 @login_required
 def tmp():
     return render_template('thread/tmp.html')
 
-#--------------------------------------------------------------------------------
-#        Страница проблем данных с потоков (ОТЧЕТ)
-#--------------------------------------------------------------------------------
-@app.route("/thread_problem")
-@login_required
-def thread_problem():
-
-    #Считывание данных и заполнение строковой переменной для вывода
-    try:
-        threads = Thread.query.all()
-
-        problem_information =""
-
-        # проходимся по всем потокам и собираем соответствующие им диапазоны и проблемы с решениями
-        for t in threads:
-            range = Range.query.filter_by(id=t.Range_Id).first()
-            problems = Problem.query.filter_by(Range_Id=range.id).all()
-            if problems:
-                advices = {}
-                for p in problems:
-                    advices.update({p.Name: (Advice.query.filter_by(Problem_Id=p.id).all())})
-
-                # Формируем строковый вывод
-                problem_information += "\n\nДата потока :" + str(t.DateTime)
-                problem_information += "\nТип данных :" + str(t.Type_of_data)
-                problem_information += "\nПолученное значение :" + str(t.Value)
-                for a in advices:
-                    problem_information += "\n\tДля данных соответствует проблема : " + a
-                    for adv in advices[a]:
-                        problem_information += "\n\t\tРешение: " + adv.Content
-                problem_information += "\n_____________________________________________________________________________________"
-            else:
-                print("Со значениям все хорошо, проблем нет")
-    except:
-        print("Ошибка считывания данных о проблемах в потоках")
-    return render_template('thread/thread_problem.html', title="Проблемы на основании данных с потоков", text = problem_information)
 
 
 

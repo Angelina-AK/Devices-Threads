@@ -18,22 +18,23 @@ class Device(db.Model):
     url = db.Column(db.String(50))
     Name = db.Column(db.String(50))
 
-    # Ссылка на детей
-    thre = db.relationship('Thread', backref = 'Device', uselist=True, lazy='subquery')
 
-class Thread(db.Model):
+
+class Sensor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    Type_of_data = db.Column(db.String(50))
-    Value = db.Column(db.Float)
-    DateTime = db.Column(db.DateTime(), default= datetime.now)
-    Range_Id = db.Column(db.Integer, db.ForeignKey('range.id'))
-    Device_Id = db.Column(db.Integer, db.ForeignKey('device.id'))
+    Name = db.Column(db.String(50))
 
-    # Родители
-    rng = db.relationship('Range', backref = 'Thread', uselist=False , lazy='subquery')
-    dev = db.relationship('Device', backref = 'Thread', uselist=False , lazy='subquery')
-    # lazy='subquery'
+    # Дети
+    rng = db.relationship('Range', backref = 'Sensor', uselist=True, lazy='subquery')
 
+
+
+class Directory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    Name = db.Column(db.String(50))
+
+    # Дети
+    rng = db.relationship('Range', backref = 'Directory', uselist=True, lazy='subquery')
 
 
 class Range(db.Model):
@@ -41,12 +42,15 @@ class Range(db.Model):
     Min = db.Column(db.Float)
     Max = db.Column(db.Float)
     Name = db.Column(db.String(50))
-    Type_of_data = db.Column(db.String(50))
+    Directory_Id = db.Column(db.Integer, db.ForeignKey('directory.id'))
+    Sensor_Id = db.Column(db.Integer, db.ForeignKey('sensor.id'))
 
-    # Ссылка на детей
-    thre = db.relationship('Thread', backref = 'Range', uselist=True, lazy='subquery')
+    # Родители
+    dir = db.relationship('Directory', backref = 'Range', uselist=False , lazy='subquery')
+    sen = db.relationship('Sensor', backref = 'Range', uselist=False , lazy='subquery')
+
+    # Дети
     prob = db.relationship('Problem', backref = 'Range', uselist=True, lazy='subquery')
-
 
 
 class Problem(db.Model):
@@ -54,10 +58,10 @@ class Problem(db.Model):
     Name = db.Column(db.String(50))
     Range_Id = db.Column(db.Integer, db.ForeignKey('range.id'))
 
-    # Родитель
+    # Родители
     rng = db.relationship('Range', backref='Problem', uselist=False , lazy='subquery')
 
-    # Ссылка на детей
+    # Дети
     adv = db.relationship('Advice', backref='Problem', uselist=True, lazy='subquery')
 
 
@@ -67,6 +71,6 @@ class Advice(db.Model):
     Content = db.Column(db.String(200))
     Problem_Id = db.Column(db.Integer, db.ForeignKey('problem.id'))
 
-    # Родитель
+    # Родители
     prob = db.relationship('Problem', backref='Advice', uselist=False, lazy='subquery')
 
